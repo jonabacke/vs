@@ -19,9 +19,8 @@ public class MulticastClient {
     private void initSocket() {
         try {
             this.socket = new DatagramSocket();
-            group = new InetSocketAddress("239.0.0.1", 9000);
-            this.socket.setBroadcast(true);
-           // this.socket.joinGroup(group, null);
+            //group = new InetSocketAddress("239.0.0.1", 9000);
+            //this.socket.joinGroup(group, NetworkInterface.getByName("lo"));
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -32,7 +31,7 @@ public class MulticastClient {
         byte[] buffer = msg.getBytes(StandardCharsets.UTF_8);
         DatagramPacket packet = null;
         try {
-            packet = new DatagramPacket(buffer, buffer.length, InetAddress.getByName("255.255.255.255"), 9000);
+            packet = new DatagramPacket(buffer, buffer.length, InetAddress.getByName("239.0.0.1"), 9000);
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
@@ -45,8 +44,8 @@ public class MulticastClient {
     }
 
     public void closeSocket() {
-       /** try {
-            this.socket.leaveGroup(group, null);
+      /**  try {
+            this.socket.leaveGroup(group, NetworkInterface.getByName("lo"));
         } catch (IOException e) {
             e.printStackTrace();
         }*/

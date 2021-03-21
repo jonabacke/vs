@@ -1,9 +1,7 @@
 package FindPartner;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.InetSocketAddress;
-import java.net.MulticastSocket;
+import java.net.*;
 import java.util.logging.Logger;
 
 public class MulticastServer {
@@ -20,9 +18,10 @@ public class MulticastServer {
 
     private void initSocket() {
         try {
-            this.socket = new MulticastSocket();
+            this.socket = new MulticastSocket(9000);
             group = new InetSocketAddress("239.0.0.1", 9000);
-            this.socket.joinGroup(group, null);
+            this.socket.joinGroup(group, NetworkInterface.getByName("enp3s0"));
+            logger.info("ausgeführt");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -31,7 +30,10 @@ public class MulticastServer {
     public String receive() {
         DatagramPacket packet = new DatagramPacket(this.buffer, this.buffer.length);
         try {
+            logger.info("davor");
+            this.socket.send(new DatagramPacket(this.buffer, this.buffer.length, group));
             this.socket.receive(packet);
+            logger.info("danach");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -40,7 +42,7 @@ public class MulticastServer {
 
     public void closeSocket() {
         try {
-            this.socket.leaveGroup(group, null);
+            this.socket.leaveGroup(group, NetworkInterface.getByName("enp3s0"));
         } catch (IOException e) {
             e.printStackTrace();
         }
