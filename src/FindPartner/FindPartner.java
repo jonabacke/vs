@@ -67,22 +67,15 @@ public class FindPartner {
                     this.checkAmount(msg);
                 } else if (msg.getMsgType().equals(EPartnerMessage.REQUEST)) {
                     this.publishStatus();
-<<<<<<< HEAD
                 } else if (msg.getMsgType().equals(EPartnerMessage.RESET)) {
                     this.partner.clear();
                     this.publishStatus();
-=======
->>>>>>> 9c3b261 (first)
                 }
             }
         }).start();
     }
 
-<<<<<<< HEAD
     private void addNewPartner(PartnerMessage msg) {
-=======
-    public void addNewPartner(PartnerMessage msg) {
->>>>>>> 9c3b261 (first)
         if (msg == null) throw new IllegalArgumentException();
         if (!this.partner.containsKey(msg.getUuid())) {
             this.partner.put(msg.getUuid(), new NetworkTuple(msg.getIp(), msg.getPort()));

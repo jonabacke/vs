@@ -23,7 +23,7 @@ public class App {
         }
 
         Self logicTime = new Self(tcpServer, partnerMap, uuid);
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 5; i++) {
             logicTime.startCircle();
             if (checkFirstThreeElements(partnerPriorityQueue, uuid)) {
 
