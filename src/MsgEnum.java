@@ -1,3 +1,3 @@
 public enum MsgEnum {
-    ENTER, ALLOW, RELEASE, REGISTER;
+    ENTER, ALLOW, RELEASE;
 }

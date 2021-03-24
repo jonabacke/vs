@@ -1,3 +1,5 @@
+import Config.ConfigFile;
+
 import java.util.UUID;
 
 public class Request implements Comparable<Request> {
@@ -12,7 +14,8 @@ public class Request implements Comparable<Request> {
     }
 
     public Request(String request) {
-        String[] tokens = request.split("\\|");
+        if (request == null) throw new IllegalArgumentException();
+        String[] tokens = request.split(ConfigFile.SEPERATOR_REGEX);
         this.clock = Integer.parseInt(tokens[0]);
         this.procID = UUID.fromString(tokens[1]);
         this.msgType = MsgEnum.valueOf(tokens[2]);
@@ -33,17 +36,29 @@ public class Request implements Comparable<Request> {
     public String getNetworkString() {
         String result = "";
         result += this.clock.toString();
-        result += "|";
+        result += ConfigFile.SEPERATOR_CONCAT;
         result += this.procID.toString();
-        result += "|";
+        result += ConfigFile.SEPERATOR_CONCAT;
         result += this.msgType.toString();
-        result += "|";
-        System.out.println(result);
         return result;
     }
 
     @Override
     public int compareTo(Request request) {
-        return Integer.compare(getClock(), request.getClock());
+        if (request == null) throw new IllegalArgumentException();
+        if (Integer.compare(getClock(), request.getClock()) == 0) {
+            return this.procID.compareTo(request.getProcID());
+        } else {
+            return Integer.compare(getClock(), request.getClock());
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "Request{" +
+                "clock=" + clock +
+                ", procID=" + procID.toString() +
+                ", msgType=" + msgType.toString() +
+                '}';
     }
 }
