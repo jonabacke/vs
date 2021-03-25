@@ -1,3 +1,5 @@
+package Lamport;
+
 import Config.ConfigFile;
 
 import java.util.UUID;
@@ -55,7 +57,7 @@ public class Request implements Comparable<Request> {
 
     @Override
     public String toString() {
-        return "Request{" +
+        return "Lamport.Request{" +
                 "clock=" + clock +
                 ", procID=" + procID.toString() +
                 ", msgType=" + msgType.toString() +

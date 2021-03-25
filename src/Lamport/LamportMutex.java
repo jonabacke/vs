@@ -1,3 +1,5 @@
+package Lamport;
+
 import Config.NetworkTuple;
 
 import java.io.BufferedReader;
@@ -9,7 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
 
-public class Self implements ILamportMutex {
+public class LamportMutex implements ILamportMutex {
     private static final Logger logger = Logger.getGlobal();
 
     private final Map<UUID, NetworkTuple> partner;
@@ -17,12 +19,12 @@ public class Self implements ILamportMutex {
     private final TCPServer tcpServer;
     private final UUID procID;
     private final ReentrantLock mutex = new ReentrantLock();
+    private final boolean [] dash = {false, false, false};
     private AtomicInteger clock;
     private Queue<Request> queue;
     private boolean running;
-    private boolean [] dash = {false, false, false};
 
-    public Self(TCPServer tcpServer, Map<UUID, NetworkTuple> partner, UUID uuid) {
+    public LamportMutex(TCPServer tcpServer, Map<UUID, NetworkTuple> partner, UUID uuid) {
         if (tcpServer == null || partner == null) throw new IllegalArgumentException();
         this.tcpServer = tcpServer;
         this.partner = partner;
@@ -134,7 +136,7 @@ public class Self implements ILamportMutex {
                             default:
                                 break;
                         }
-                        logger.info("Queue: " + this.queue.toString());
+                        logger.info("Queue:  " + this.queue.toString());
                         this.mutex.unlock();
                     }
                 });
@@ -147,12 +149,14 @@ public class Self implements ILamportMutex {
         this.queue.removeIf(x -> x.getMsgType().equals(MsgEnum.ALLOW) && x.getClock() <= this.clock.get());
     }
 
+    @Override
     public void startCircle() {
         for (boolean d: this.dash) {
             d = true;
         }
     }
 
+    @Override
     public boolean isDashed() {
         boolean result = false;
         for (boolean d : this.dash) {

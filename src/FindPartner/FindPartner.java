@@ -9,7 +9,7 @@ import Config.NetworkTuple;
 
 import static Config.ConfigFile.WAITING_TIME;
 
-public class FindPartner {
+public class FindPartner implements IFindPartner {
     private static final Logger logger = Logger.getGlobal();
     private static final int COUNTER_MAX = 256;
 
@@ -39,7 +39,7 @@ public class FindPartner {
     }
 
     private void publishStatus() {
-        //TODO publish amount of known Partner
+        //TODO publish amount of known Robot.Partner
         String msg = new PartnerMessage(EPartnerMessage.STATUS, this.tcpIP, this.tcpPort, this.partner.size(), this.uuid).getNetworkString();
         this.client.publishMsg(msg);
     }
@@ -92,7 +92,7 @@ public class FindPartner {
         } else if (msg.getAmount() == this.partner.size()) {
             // TODO send I got same
             logger.finest(() -> "I got [" + this.partner.size() + "/" + msg.getAmount() + "] partner");
-            logger.finest(() -> "Partner: " + this.partner.keySet().toString());
+            logger.finest(() -> "Robot.Partner: " + this.partner.keySet().toString());
         } else if (msg.getAmount() > this.partner.size()) {
             // TODO send I got less -> need more
             logger.finest(() -> "I got [" + this.partner.size() + "/" + msg.getAmount() + "] partner");
@@ -106,6 +106,7 @@ public class FindPartner {
         }
     }
 
+    @Override
     public Map<UUID, NetworkTuple> getPartner() {
         return partner;
     }

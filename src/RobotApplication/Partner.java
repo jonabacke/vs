@@ -1,12 +1,14 @@
+package RobotApplication;
+
 import Config.NetworkTuple;
 
 import java.util.UUID;
 
 public class Partner implements Comparable<Partner>{
 
-    UUID uuid = null;
-    NetworkTuple networkTuple = null;
-    int workedCounter = 0;
+    private UUID uuid = null;
+    private NetworkTuple networkTuple = null;
+    private int workedCounter = 0;
 
     public Partner(UUID uuid, NetworkTuple networkTuple) {
         this.uuid = uuid;
@@ -25,6 +27,10 @@ public class Partner implements Comparable<Partner>{
         return workedCounter;
     }
 
+    public void setWorkedCounter(int workedCounter) {
+        this.workedCounter = workedCounter;
+    }
+
     @Override
     public int compareTo(Partner partner) {
         if (partner == null) throw new IllegalArgumentException();
@@ -37,7 +43,7 @@ public class Partner implements Comparable<Partner>{
 
     @Override
     public String toString() {
-        return "Partner{" +
+        return "Robot.Partner{" +
                 "uuid=" + uuid.toString() +
                 ", networkTuple=" + networkTuple.toString() +
                 ", workedCounter=" + workedCounter +

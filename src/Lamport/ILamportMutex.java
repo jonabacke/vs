@@ -1,3 +1,5 @@
+package Lamport;
+
 import java.util.UUID;
 
 public interface ILamportMutex {
@@ -7,7 +9,7 @@ public interface ILamportMutex {
     public void init();
     
     /**
-     * send enter request to outhers
+     * send enter request to others
      */
     public void requestToEnter();
 
@@ -18,13 +20,13 @@ public interface ILamportMutex {
     public void allowToEnter(UUID requester);
 
     /**
-     * release all allows of outher processes and release mutex
+     * release all allows of other processes and release mutex
      */
     public void release();
 
     /**
-     * allow outher process to enter
-     * @return
+     * allow other process to enter
+     * @return true if enter is allowed
      */
     public boolean allowedToEnter();
 
@@ -32,4 +34,11 @@ public interface ILamportMutex {
      * receive msg
      */
     public void receive();
+
+    /**
+     * start Cycle
+     */
+    public void startCircle();
+
+    public boolean isDashed();
 }

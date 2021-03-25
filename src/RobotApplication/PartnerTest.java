@@ -1,5 +1,7 @@
+package RobotApplication;
+
 import Config.NetworkTuple;
-import org.junit.Assert;
+import RobotApplication.Partner;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -21,7 +23,7 @@ class PartnerTest {
         Partner [] partners = new Partner[100];
         for (int i = 0; i < 100; i++) {
             Partner partner = new Partner(UUID.randomUUID(), new NetworkTuple("asd", 123));
-            partner.workedCounter = (int) (Math.random() * 1000);
+            partner.setWorkedCounter((int) (Math.random() * 1000));
             partners[i] = partner;
         }
         for (int i = 0; i < 100; i++) {

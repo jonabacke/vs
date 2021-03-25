@@ -1,3 +1,5 @@
+package Lamport;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -41,12 +43,9 @@ public class TCPServer {
         BufferedReader bufferedReader = null;
         try {
             bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            //result = this.bufferedReader.readLine();
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        //System.out.println("Receive: " + result);
         return bufferedReader;
     }
 
