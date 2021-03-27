@@ -15,50 +15,49 @@ public class FindPartner implements IFindPartner {
 
     private final String tcpIP;
     private final int tcpPort;
-    private final UUID uuid;
-    private final MulticastServer server;
-    private final MulticastClient client;
+    private UUID uuid;
+    //private final MulticastServer server;
+    //private final MulticastClient client;
     private final Map<UUID, NetworkTuple> partner;
+    private final FindPartnerInvoke findPartnerInvoke;
     private boolean running = false;
     private boolean receives = true;
     private  int lessCounter = 0;
 
-    public FindPartner(String tcpIP, int tcpPort, UUID uuid) {
+    public FindPartner(String tcpIP, int tcpPort, FindPartnerInvoke findPartnerInvoke) {
         Runtime.getRuntime().addShutdownHook(new Thread(()->this.running = false));
         this.partner = new HashMap<>();
-        this.server = new MulticastServer();
-        this.client = new MulticastClient();
+        this.findPartnerInvoke = findPartnerInvoke;
+        //this.server = new MulticastServer();
+        //this.client = new MulticastClient();
         this.tcpIP = tcpIP;
         this.tcpPort = tcpPort;
-        this.uuid = uuid;
         this.running = true;
-        this.receivePublishedInformation();
-        this.publishStatus();
-        this.requestSocketData();
-        this.waitForFinish();
+        //this.receivePublishedInformation();
     }
 
     private void publishStatus() {
         //TODO publish amount of known Robot.Partner
         String msg = new PartnerMessage(EPartnerMessage.STATUS, this.tcpIP, this.tcpPort, this.partner.size(), this.uuid).getNetworkString();
-        this.client.publishMsg(msg);
+        this.findPartnerInvoke.publishMsg(msg);
     }
 
     private void requestSocketData() {
         // TODO publish connection request
         String msg = new PartnerMessage(EPartnerMessage.REQUEST, null, 0, 0, this.uuid).getNetworkString();
-        this.client.publishMsg(msg);
+        this.findPartnerInvoke.publishMsg(msg);
     }
 
     private void reset() {
         String msg = new PartnerMessage(EPartnerMessage.RESET, null, 0, 0, this.uuid).getNetworkString();
-        this.client.publishMsg(msg);
+        this.findPartnerInvoke.publishMsg(msg);
     }
 
-    private void receivePublishedInformation() {
-        new Thread(() -> {
-            while (this.running) {
-                String receivedString = this.server.receive();
+    @Override
+    public void receivePublishedInformation(String receivedString) {
+        //new Thread(() -> {
+            //while (this.running) {
+                //String receivedString = this.server.receive();
                 this.receives = true;
                 logger.finest(()-> "Received String: " + receivedString);
                 PartnerMessage msg = new PartnerMessage(receivedString);
@@ -71,8 +70,8 @@ public class FindPartner implements IFindPartner {
                     this.partner.clear();
                     this.publishStatus();
                 }
-            }
-        }).start();
+            //}
+        //}).start();
     }
 
     private void addNewPartner(PartnerMessage msg) {
@@ -107,7 +106,11 @@ public class FindPartner implements IFindPartner {
     }
 
     @Override
-    public Map<UUID, NetworkTuple> getPartner() {
+    public Map<UUID, NetworkTuple> getPartner(UUID uuid) {
+        this.uuid = uuid;
+        this.publishStatus();
+        this.requestSocketData();
+        this.waitForFinish();
         return partner;
     }
 

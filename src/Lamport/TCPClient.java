@@ -3,6 +3,7 @@ package Lamport;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.logging.Logger;
 
 public class TCPClient {
     private Socket socket;
@@ -22,7 +23,7 @@ public class TCPClient {
     }
 
     public void sendMessage(String msg) {
-        //System.out.println("Send: " + msg);
+        Logger.getGlobal().info("Send: " + msg);
         this.printWriter.println(msg);
     }
 

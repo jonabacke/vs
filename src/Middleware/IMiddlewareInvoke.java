@@ -1,5 +1,7 @@
 package Middleware;
 
+import java.util.UUID;
+
 public interface IMiddlewareInvoke {
-    public void invoke(String serviceName, String value);
+    public void invoke(UUID partnerUUID, Class<?> className, String function, Object [] values, boolean isReliable);
 }

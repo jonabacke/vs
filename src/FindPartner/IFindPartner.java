@@ -11,5 +11,7 @@ public interface IFindPartner {
      * Get the available Partners
      * @return partner Map with UUID as Key and a NetworkTuple for the TCP-Connection as Value
      */
-    public Map<UUID, NetworkTuple> getPartner() ;
+    public Map<UUID, NetworkTuple> getPartner(UUID uuid) ;
+
+    public void receivePublishedInformation(String receivedString);
 }

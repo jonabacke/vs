@@ -3,6 +3,7 @@ package RobotApplication;
 public class WeldingRobot implements IWeldingRobot {
 
     private final Robot robot;
+    private int status;
 
     public WeldingRobot(Robot robot) {
         this.robot = robot;
@@ -20,6 +21,10 @@ public class WeldingRobot implements IWeldingRobot {
 
     @Override
     public void setStatus(int status) {
+        this.status = status;
+    }
 
+    public int getStatus() {
+        return status;
     }
 }

@@ -1,5 +1,6 @@
 package Lamport;
 
+import Config.ConfigFile;
 import Config.NetworkTuple;
 
 import java.io.BufferedReader;
@@ -14,73 +15,85 @@ import java.util.logging.Logger;
 public class LamportMutex implements ILamportMutex {
     private static final Logger logger = Logger.getGlobal();
 
-    private final Map<UUID, NetworkTuple> partner;
-    private final Map<UUID, TCPClient> tcpClients = new HashMap<>();
-    private final TCPServer tcpServer;
-    private final UUID procID;
+    private Map<UUID, NetworkTuple> partner;
+    //private final Map<UUID, TCPClient> tcpClients = new HashMap<>();
+    private UUID procID;
     private final ReentrantLock mutex = new ReentrantLock();
-    private final boolean [] dash = {false, false, false};
     private AtomicInteger clock;
     private Queue<Request> queue;
+    private Queue<Request> loggingQueue;
     private boolean running;
+    private LamportInvoke lamportInvoke;
+    private Thread thread;
+    private int semaphore;
 
-    public LamportMutex(TCPServer tcpServer, Map<UUID, NetworkTuple> partner, UUID uuid) {
-        if (tcpServer == null || partner == null) throw new IllegalArgumentException();
-        this.tcpServer = tcpServer;
-        this.partner = partner;
-        this.procID = uuid;
-        for (Map.Entry<UUID, NetworkTuple> tuple : partner.entrySet()) {
-            TCPClient tcpClient = new TCPClient(tuple.getValue().getIp(), tuple.getValue().getPort());
-            tcpClients.put(tuple.getKey(), tcpClient);
-        }
+    public LamportMutex(LamportInvoke lamportInvoke) {
+        this.semaphore = 0;
+        this.lamportInvoke = lamportInvoke;
+        this.partner = new HashMap<>();
         this.init();
+    }
+
+    public Queue<Request> getLoggingQueue() {
+        return loggingQueue;
+    }
+
+    public void setProcID(UUID procID) {
+        this.procID = procID;
+    }
+
+    public void setPartner(Map<UUID, NetworkTuple> partner) {
+        this.partner = partner;
+    }
+
+    public void gotError() {
+        this.mutex.lock();
+        for (UUID uuid : partner.keySet()) {
+            this.lamportInvoke.send(uuid, new Request(this.clock.get(), this.procID, MsgEnum.ERROR).getNetworkString());
+        }
+        this.mutex.unlock();
     }
 
     @Override
     public void init() {
         this.clock = new AtomicInteger(0);
         this.queue = new PriorityQueue<>();
+        this.loggingQueue = new PriorityQueue<>();
         this.running = false;
-        this.receive();
     }
 
     @Override
     public void requestToEnter() {
         this.mutex.lock();
-        this.queue.add(new Request(this.clock.incrementAndGet(), this.procID, MsgEnum.ENTER));
+        Request r = new Request(this.clock.incrementAndGet(), this.procID, MsgEnum.ENTER);
+        this.queue.add(r);
         this.cleanupQ();
-        for (TCPClient tcpClient : tcpClients.values()) {
-            tcpClient.sendMessage(new Request(this.clock.get(), this.procID, MsgEnum.ENTER).getNetworkString());
+        for (UUID uuid : partner.keySet()) {
+            this.lamportInvoke.send(uuid, r.getNetworkString());
         }
+        //for (TCPClient tcpClient : tcpClients.values()) {
+        //    tcpClient.sendMessage(new Request(this.clock.get(), this.procID, MsgEnum.ENTER).getNetworkString());
+        //}
+        logger.info("Queue:  " + this.queue.toString());
         this.mutex.unlock();
     }
 
     @Override
     public void allowToEnter(UUID requester) {
-        try {
-            Request r = new Request(this.clock.incrementAndGet(), this.procID, MsgEnum.ALLOW);
-            tcpClients.get(requester).sendMessage(r.getNetworkString());
-        } catch (NullPointerException exception) {
-            logger.warning("Requester: " + requester.toString());
-        }
+        Request r = new Request(this.clock.incrementAndGet(), this.procID, MsgEnum.ALLOW);
+        this.lamportInvoke.send(requester, r.getNetworkString());
     }
 
     @Override
     public void release() {
         this.mutex.lock();
-        this.queue.poll();
+        //this.queue.poll();
         this.cleanupQ();
         this.clock.incrementAndGet();
-        for (TCPClient tcpClient : tcpClients.values()) {
-            tcpClient.sendMessage(new Request(this.clock.get(), this.procID, MsgEnum.RELEASE).getNetworkString());
+        for (UUID uuid : partner.keySet()) {
+            this.lamportInvoke.send(uuid, new Request(this.clock.get(), this.procID, MsgEnum.RELEASE).getNetworkString());
         }
         this.mutex.unlock();
-        for (boolean d: this.dash) {
-            if (d) {
-                d = false;
-                break;
-            }
-        }
     }
 
     @Override
@@ -91,6 +104,7 @@ public class LamportMutex implements ILamportMutex {
             if (this.queue.peek() == null) {
                 return false;
             } else {
+                logger.info("Queue: " + this.queue);
                 return this.queue.peek().getProcID().equals(this.procID) && this.partner.size() == commProcess;
             }
         } finally {
@@ -99,50 +113,42 @@ public class LamportMutex implements ILamportMutex {
     }
 
     @Override
-    public void receive() {
-        this.running = true;
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> this.running = false));
-
-        new Thread(() -> {
-            ExecutorService executorService = Executors.newFixedThreadPool(20);
-            while (this.running) {
-                Socket socket = this.tcpServer.initServer();
-                BufferedReader bufferedReader = tcpServer.receiveMessages(socket);
-                executorService.execute(() -> {
-                    Request msg;
-                    while (this.running) {
-                        String received = tcpServer.readLine(bufferedReader);
-                        msg = new Request(received);
-                        logger.info("Message: " + msg.toString() + " : " + Thread.currentThread().getName());
-                        this.mutex.lock();
-                        this.clock.set(Math.max(this.clock.get(), msg.getClock()));
-                        this.clock.incrementAndGet();
-                        switch (msg.getMsgType()) {
-                            case ENTER:
-                                if (!msg.getProcID().toString().equals(this.procID.toString())) {
-                                    this.queue.add(msg);
-                                }
-                                this.allowToEnter(msg.getProcID());
-                                break;
-                            case ALLOW:
-                                this.queue.add(msg);
-                                break;
-                            case RELEASE:
-                                if (this.queue.size() > 0 && !this.queue.peek().getProcID().toString().equals(this.procID.toString())) {
-                                    Request finalMsg = msg;
-                                    this.queue.removeIf(x -> x.getMsgType().equals(MsgEnum.ENTER) && finalMsg.getProcID().toString().equals(x.getProcID().toString()));
-                                }
-                                break;
-                            default:
-                                break;
-                        }
-                        logger.info("Queue:  " + this.queue.toString());
-                        this.mutex.unlock();
+    public void receive(String msg) {
+        Request request = new Request(msg);
+        //this.loggingQueue.add(request);
+        this.mutex.lock();
+        logger.info("Message: " + request.toString() + " : " + Thread.currentThread().getName());
+        this.clock.set(Math.max(this.clock.get(), request.getClock()));
+        this.clock.incrementAndGet();
+        switch (request.getMsgType()) {
+            case ENTER:
+                if (!request.getProcID().toString().equals(this.procID.toString())) {
+                    this.queue.add(request);
+                }
+                this.allowToEnter(request.getProcID());
+                break;
+            case ALLOW:
+                this.queue.add(request);
+                break;
+            case RELEASE:
+                if (this.queue.size() > 0) {
+                    boolean worked = this.queue.removeIf(x -> x.getMsgType().equals(MsgEnum.ENTER) && request.getProcID().toString().equals(x.getProcID().toString()));
+                    if (worked) {
+                        this.semaphore ++;
+                    } else {
+                        logger.severe("Failed to release" + this.queue.toString());
                     }
-                });
-            }
-            logger.warning("shutdown");
-        }).start();
+                }
+                break;
+            case ERROR:
+                if (this.queue.size() > 0) {
+                    this.queue.removeIf(x -> x.getMsgType().equals(MsgEnum.ENTER) && request.getProcID().toString().equals(x.getProcID().toString()));
+                }
+            default:
+                break;
+        }
+        logger.info("Queue:  " + this.queue.toString());
+        this.mutex.unlock();
     }
 
     private void cleanupQ() {
@@ -150,18 +156,18 @@ public class LamportMutex implements ILamportMutex {
     }
 
     @Override
-    public void startCircle() {
-        for (boolean d: this.dash) {
-            d = true;
-        }
+    public void resetCircle() {
+        this.semaphore -= ConfigFile.AMOUNT_WORKER;
     }
 
-    @Override
     public boolean isDashed() {
-        boolean result = false;
-        for (boolean d : this.dash) {
-            result = result || d;
+        mutex.lock();
+        boolean result = this.semaphore < ConfigFile.AMOUNT_WORKER;
+        logger.info("Semaphore:  " + this.semaphore);
+        if (!result) {
+            this.resetCircle();
         }
+        mutex.unlock();
         return result;
     }
 }

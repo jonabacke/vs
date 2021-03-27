@@ -33,12 +33,11 @@ public interface ILamportMutex {
     /**
      * receive msg
      */
-    public void receive();
+    public void receive(String msg);
 
     /**
      * start Cycle
      */
-    public void startCircle();
+    public void resetCircle();
 
-    public boolean isDashed();
 }

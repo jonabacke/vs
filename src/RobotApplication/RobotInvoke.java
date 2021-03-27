@@ -1,7 +1,12 @@
 package RobotApplication;
 
 import Config.ConfigFile;
+import Config.NetworkTuple;
 import Middleware.Middleware;
+
+import java.util.Arrays;
+import java.util.Map;
+import java.util.UUID;
 
 public class RobotInvoke {
 
@@ -11,15 +16,12 @@ public class RobotInvoke {
         this.middleware = middleware;
     }
 
-    public void register(String uuid) {
-        this.middleware.invoke(ConfigFile.REGISTER, uuid);
+    public void setPartner(Map<UUID, NetworkTuple> partner) {
+        this.middleware.setPartner(partner);
     }
 
-    public void welding() {
-        this.middleware.invoke(ConfigFile.WELDING, null);
+    public void gotError(UUID targetUUID, UUID sendUUID) {
+        this.middleware.invoke(targetUUID, Robot.class, ConfigFile.ERROR_RECEIVE, new String[]{sendUUID.toString()}, true);
     }
 
-    public void notWelding() {
-        this.middleware.invoke(ConfigFile.NOT_WELDING, null);
-    }
 }

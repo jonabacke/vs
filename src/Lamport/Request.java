@@ -17,7 +17,7 @@ public class Request implements Comparable<Request> {
 
     public Request(String request) {
         if (request == null) throw new IllegalArgumentException();
-        String[] tokens = request.split(ConfigFile.SEPERATOR_REGEX);
+        String[] tokens = request.split(ConfigFile.SEPARATOR_MESSAGE_REGEX);
         this.clock = Integer.parseInt(tokens[0]);
         this.procID = UUID.fromString(tokens[1]);
         this.msgType = MsgEnum.valueOf(tokens[2]);
@@ -38,9 +38,9 @@ public class Request implements Comparable<Request> {
     public String getNetworkString() {
         String result = "";
         result += this.clock.toString();
-        result += ConfigFile.SEPERATOR_CONCAT;
+        result += ConfigFile.SEPARATOR_MESSAGE_CONCAT;
         result += this.procID.toString();
-        result += ConfigFile.SEPERATOR_CONCAT;
+        result += ConfigFile.SEPARATOR_MESSAGE_CONCAT;
         result += this.msgType.toString();
         return result;
     }

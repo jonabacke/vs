@@ -22,7 +22,7 @@ public class PartnerMessage {
         if (networkString == null) {
             throw new IllegalArgumentException();
         }
-        String[] token = networkString.split(ConfigFile.SEPERATOR_REGEX);
+        String[] token = networkString.split(ConfigFile.SEPARATOR_MESSAGE_REGEX);
         switch (token[0]) {
             case "STATUS" -> {
                 if (token.length < 5) throw new IllegalArgumentException();
@@ -46,14 +46,14 @@ public class PartnerMessage {
     public String getNetworkString() {
         String result = "";
         result += this.msgType;
-        result += ConfigFile.SEPERATOR_CONCAT;
+        result += ConfigFile.SEPARATOR_MESSAGE_CONCAT;
         result += this.uuid.toString();
-        result += ConfigFile.SEPERATOR_CONCAT;
+        result += ConfigFile.SEPARATOR_MESSAGE_CONCAT;
         if (this.msgType == EPartnerMessage.STATUS) {
             result += this.ip;
-            result += ConfigFile.SEPERATOR_CONCAT;
+            result += ConfigFile.SEPARATOR_MESSAGE_CONCAT;
             result += this.port;
-            result += ConfigFile.SEPERATOR_CONCAT;
+            result += ConfigFile.SEPARATOR_MESSAGE_CONCAT;
             result += this.amount;
         }
         return result;
