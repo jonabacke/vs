@@ -37,9 +37,7 @@ public class PartnerMessage {
                 this.msgType = EPartnerMessage.REQUEST;
                 this.uuid = UUID.fromString(token[1]);
             }
-            case "RESET" -> {
-                this.msgType = EPartnerMessage.RESET;
-            }
+            case "RESET" -> this.msgType = EPartnerMessage.RESET;
         }
     }
 

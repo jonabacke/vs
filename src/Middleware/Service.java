@@ -6,7 +6,7 @@ import Lamport.TCPServer;
 public class Service {
     private final String serviceName;
     private final boolean isReliable;
-    private TCPServer tcpServer;
+    private final TCPServer tcpServer;
 
     public Service(String serviceName, boolean isReliable, TCPServer tcpServer) {
         this.serviceName = serviceName;
@@ -16,10 +16,6 @@ public class Service {
 
     public TCPServer getTcpServer() {
         return tcpServer;
-    }
-
-    public String getServiceName() {
-        return serviceName;
     }
 
     public String getServiceClassName() {

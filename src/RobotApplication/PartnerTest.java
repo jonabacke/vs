@@ -1,13 +1,12 @@
 package RobotApplication;
 
 import Config.NetworkTuple;
-import RobotApplication.Partner;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class PartnerTest {
 
@@ -40,7 +39,6 @@ class PartnerTest {
     @Test
     void compareTo() {
         while (partners1.peek() != null && partners2.peek() != null) {
-            System.out.println(partners1.peek().toString());
             assertEquals(partners1.poll().toString(), Objects.requireNonNull(partners2.poll()).toString());
         }
         while (partners3.peek() != null && partners4.peek() != null) {

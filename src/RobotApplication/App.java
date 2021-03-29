@@ -29,24 +29,18 @@ public class App {
 
         FindPartner findPartner = new FindPartner(middleware.getTcpServer().getIp(), middleware.getTcpServer().getPort(), findPartnerInvoke);
         LamportMutex lamportMutex = new LamportMutex(lamportInvoke);
-        Robot robot = new Robot(uuid, robotInvoke, lamportMutex, findPartner);
+        Controller controller = new Controller(uuid, robotInvoke, lamportMutex, findPartner);
 
-        WeldingRobot weldingRobot = new WeldingRobot(robot);
+        WeldingRobot weldingRobot = new WeldingRobot(controller);
 
-        robot.init(weldingRobot);
+        controller.init(weldingRobot);
 
         new SkeletonStub(FindPartner.class.getName(), findPartner, middleware, false);
-        new SkeletonStub(Robot.class.getName(), robot, middleware, true);
+        new SkeletonStub(Controller.class.getName(), controller, middleware, true);
         new SkeletonStub(LamportMutex.class.getName(), lamportMutex, middleware, true);
 
         weldingRobot.register(0);
 
-
-        try {
-            Thread.sleep(1000000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
 
 
     }

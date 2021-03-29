@@ -1,14 +1,10 @@
 package Lamport;
 
-import Middleware.Server;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
 public class TCPServer {
@@ -56,15 +52,6 @@ public class TCPServer {
         } catch (IOException e) {
             e.printStackTrace();
             return null;
-        }
-    }
-
-    public void closeServer() {
-        try {
-            this.bufferedReader.close();
-            this.serverSocket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 

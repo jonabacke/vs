@@ -1,10 +1,10 @@
 package Middleware;
 
 public class Wrapper {
-    private String methodName;
-    private Object [] objectParams;
-    private Class<?> [] classParams;
-    private String className;
+    private final String methodName;
+    private final Object [] objectParams;
+    private final Class<?> [] classParams;
+    private final String className;
 
     public String getMethodName() {
         return methodName;

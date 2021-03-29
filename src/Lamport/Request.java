@@ -48,7 +48,7 @@ public class Request implements Comparable<Request> {
     @Override
     public int compareTo(Request request) {
         if (request == null) throw new IllegalArgumentException();
-        if (Integer.compare(getClock(), request.getClock()) == 0) {
+        if (getClock() == request.getClock()) {
             return this.procID.compareTo(request.getProcID());
         } else {
             return Integer.compare(getClock(), request.getClock());

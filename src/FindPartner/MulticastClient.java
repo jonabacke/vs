@@ -33,7 +33,7 @@ public class MulticastClient {
     public void publishMsg(String msg) {
         if (msg == null) throw new IllegalArgumentException();
         byte[] buffer = msg.getBytes(StandardCharsets.UTF_8);
-        DatagramPacket packet = null;
+        DatagramPacket packet;
             packet = new DatagramPacket(buffer, buffer.length, group);
         logger.finest(()-> "send Msg: " + msg);
         try {

@@ -2,11 +2,10 @@ package RobotApplication;
 
 public class WeldingRobot implements IWeldingRobot {
 
-    private final Robot robot;
-    private int status;
+    private final Controller controller;
 
-    public WeldingRobot(Robot robot) {
-        this.robot = robot;
+    public WeldingRobot(Controller controller) {
+        this.controller = controller;
     }
 
     @Override
@@ -16,15 +15,10 @@ public class WeldingRobot implements IWeldingRobot {
 
     @Override
     public void register(int id) {
-        robot.register(0);
+        controller.register(0);
     }
 
     @Override
     public void setStatus(int status) {
-        this.status = status;
-    }
-
-    public int getStatus() {
-        return status;
     }
 }

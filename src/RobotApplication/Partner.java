@@ -6,8 +6,8 @@ import java.util.UUID;
 
 public class Partner implements Comparable<Partner>{
 
-    private UUID uuid = null;
-    private NetworkTuple networkTuple = null;
+    private final UUID uuid;
+    private final NetworkTuple networkTuple;
     private int workedCounter = 0;
 
     public Partner(UUID uuid, NetworkTuple networkTuple) {
@@ -17,10 +17,6 @@ public class Partner implements Comparable<Partner>{
 
     public UUID getUuid() {
         return uuid;
-    }
-
-    public NetworkTuple getNetworkTuple() {
-        return networkTuple;
     }
 
     public int getWorkedCounter() {
@@ -34,7 +30,7 @@ public class Partner implements Comparable<Partner>{
     @Override
     public int compareTo(Partner partner) {
         if (partner == null) throw new IllegalArgumentException();
-        if (Integer.compare(this.workedCounter, partner.workedCounter) == 0) {
+        if (this.workedCounter == partner.workedCounter) {
         return this.uuid.compareTo(partner.uuid);
         } else {
             return Integer.compare(this.workedCounter, partner.workedCounter);

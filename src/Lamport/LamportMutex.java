@@ -3,11 +3,7 @@ package Lamport;
 import Config.ConfigFile;
 import Config.NetworkTuple;
 
-import java.io.BufferedReader;
-import java.net.Socket;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Logger;
@@ -16,15 +12,12 @@ public class LamportMutex implements ILamportMutex {
     private static final Logger logger = Logger.getGlobal();
 
     private Map<UUID, NetworkTuple> partner;
-    //private final Map<UUID, TCPClient> tcpClients = new HashMap<>();
     private UUID procID;
     private final ReentrantLock mutex = new ReentrantLock();
     private AtomicInteger clock;
     private Queue<Request> queue;
     private Queue<Request> loggingQueue;
-    private boolean running;
-    private LamportInvoke lamportInvoke;
-    private Thread thread;
+    private final LamportInvoke lamportInvoke;
     private int semaphore;
 
     public LamportMutex(LamportInvoke lamportInvoke) {
@@ -35,7 +28,12 @@ public class LamportMutex implements ILamportMutex {
     }
 
     public Queue<Request> getLoggingQueue() {
-        return loggingQueue;
+        try {
+            this.mutex.lock();
+            return loggingQueue;
+        }  finally {
+            this.mutex.unlock();
+        }
     }
 
     public void setProcID(UUID procID) {
@@ -59,7 +57,6 @@ public class LamportMutex implements ILamportMutex {
         this.clock = new AtomicInteger(0);
         this.queue = new PriorityQueue<>();
         this.loggingQueue = new PriorityQueue<>();
-        this.running = false;
     }
 
     @Override
@@ -71,9 +68,6 @@ public class LamportMutex implements ILamportMutex {
         for (UUID uuid : partner.keySet()) {
             this.lamportInvoke.send(uuid, r.getNetworkString());
         }
-        //for (TCPClient tcpClient : tcpClients.values()) {
-        //    tcpClient.sendMessage(new Request(this.clock.get(), this.procID, MsgEnum.ENTER).getNetworkString());
-        //}
         logger.info("Queue:  " + this.queue.toString());
         this.mutex.unlock();
     }
@@ -87,7 +81,6 @@ public class LamportMutex implements ILamportMutex {
     @Override
     public void release() {
         this.mutex.lock();
-        //this.queue.poll();
         this.cleanupQ();
         this.clock.incrementAndGet();
         for (UUID uuid : partner.keySet()) {
@@ -102,10 +95,9 @@ public class LamportMutex implements ILamportMutex {
             this.mutex.lock();
             long commProcess = this.queue.stream().filter(x -> x.getMsgType().equals(MsgEnum.ALLOW)).count();
             if (this.queue.peek() == null) {
-                return false;
+                return true;
             } else {
-                logger.info("Queue: " + this.queue);
-                return this.queue.peek().getProcID().equals(this.procID) && this.partner.size() == commProcess;
+                return !this.queue.peek().getProcID().equals(this.procID) || this.partner.size() != commProcess;
             }
         } finally {
             this.mutex.unlock();
@@ -115,7 +107,9 @@ public class LamportMutex implements ILamportMutex {
     @Override
     public void receive(String msg) {
         Request request = new Request(msg);
-        //this.loggingQueue.add(request);
+        if (ConfigFile.LOG) {
+            this.loggingQueue.add(request);
+        }
         this.mutex.lock();
         logger.info("Message: " + request.toString() + " : " + Thread.currentThread().getName());
         this.clock.set(Math.max(this.clock.get(), request.getClock()));
@@ -160,7 +154,7 @@ public class LamportMutex implements ILamportMutex {
         this.semaphore -= ConfigFile.AMOUNT_WORKER;
     }
 
-    public boolean isDashed() {
+    public boolean isRunning() {
         mutex.lock();
         boolean result = this.semaphore < ConfigFile.AMOUNT_WORKER;
         logger.info("Semaphore:  " + this.semaphore);

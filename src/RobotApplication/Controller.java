@@ -6,7 +6,6 @@ import FindPartner.FindPartner;
 import Lamport.LamportMutex;
 import Lamport.Request;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -17,20 +16,20 @@ import java.util.logging.Logger;
 
 import static java.lang.System.currentTimeMillis;
 
-public class Robot implements IWeldingRobot, IRobotCall {
+public class Controller implements IWeldingRobot, IRobotCall {
     private static final Logger logger = Logger.getGlobal();
     private final RobotInvoke robotInvoke;
     private UUID uuid;
-    private Queue<Partner> partnerRobotsQueue;
+    private final Queue<Partner> partnerRobotsQueue;
     private IWeldingRobot weldingRobot;
-    private LamportMutex lamportMutex;
+    private final LamportMutex lamportMutex;
     private Map<UUID, NetworkTuple> partner;
-    private FindPartner findPartner;
+    private final FindPartner findPartner;
     private boolean running;
     private final ReentrantLock mutex = new ReentrantLock();
-    private AtomicBoolean emergencyCall;
+    private final AtomicBoolean emergencyCall;
 
-    public Robot(UUID uuid, RobotInvoke robotInvoke, LamportMutex lamportMutex, FindPartner findPartner) {
+    public Controller(UUID uuid, RobotInvoke robotInvoke, LamportMutex lamportMutex, FindPartner findPartner) {
         this.uuid = uuid;
         this.robotInvoke = robotInvoke;
         this.lamportMutex = lamportMutex;
@@ -70,10 +69,10 @@ public class Robot implements IWeldingRobot, IRobotCall {
         logger.warning("Start Circle");
             if (this.checkFirstThreeElements(ConfigFile.AMOUNT_WORKER)) {
                 this.lamportMutex.requestToEnter();
-                while (!this.lamportMutex.allowedToEnter()) {
+                while (this.lamportMutex.allowedToEnter()) {
                     this.sleep(0);
                 }
-                if ((int) (Math.random() * 100) <= 1 && false) {
+                if ((int) (Math.random() * 100) < 1) {
                     logger.severe("Got Error " + this.uuid);
                     this.setStatus(-1);
                     this.lamportMutex.gotError();
@@ -85,14 +84,14 @@ public class Robot implements IWeldingRobot, IRobotCall {
                     this.lamportMutex.release();
                 }
             }
-            while (this.lamportMutex.isDashed() && this.running && !this.emergencyCall.get()) {
+            while (this.lamportMutex.isRunning() && this.running && !this.emergencyCall.get()) {
                 sleep(0);
             }
             if (this.emergencyCall.get()) {
                 logger.severe("Start emergency work");
                 this.emergencyCall.set(false);
                 this.lamportMutex.requestToEnter();
-                while (!this.lamportMutex.allowedToEnter()) {
+                while (this.lamportMutex.allowedToEnter()) {
                     this.sleep(0);
                 }
                 if ((int) (Math.random() * 100) <= 1) {
@@ -106,7 +105,7 @@ public class Robot implements IWeldingRobot, IRobotCall {
                     this.lamportMutex.release();
                 }
                 logger.severe("End emergency work");
-                while (this.lamportMutex.isDashed() && this.running && !this.emergencyCall.get()) {
+                while (this.lamportMutex.isRunning() && this.running && !this.emergencyCall.get()) {
                     sleep(0);
                 }
             }
@@ -119,13 +118,15 @@ public class Robot implements IWeldingRobot, IRobotCall {
         for (Partner p: temp) {
             logger.severe("Robot: " + p.toString());
         }
-        //this.writeOut();
+        if (ConfigFile.LOG){
+            this.writeOut();
+        }
     }
 
     public void writeOut() {
         Queue<Request> queue = this.lamportMutex.getLoggingQueue();
         try {
-            FileWriter fileWriter = new FileWriter(this.uuid.toString());
+            FileWriter fileWriter = new FileWriter("log/" + this.uuid.toString());
             for (Request r : queue) {
                 fileWriter.write(r.toString() + "\r");
             }
@@ -136,8 +137,6 @@ public class Robot implements IWeldingRobot, IRobotCall {
 
 
     }
-
-    private void startCircle() {}
 
     public void startWorking() {
         this.setStatus(1);
@@ -158,7 +157,6 @@ public class Robot implements IWeldingRobot, IRobotCall {
 
     private boolean checkFirstThreeElements(int amountWorker) {
         this.mutex.lock();
-        if (this.partnerRobotsQueue == null) throw new IllegalArgumentException();
         if (this.partnerRobotsQueue.size() < 3) throw new IllegalArgumentException("" + this.partnerRobotsQueue.size());
         boolean result = false;
         int counter = 0;

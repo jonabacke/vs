@@ -1,11 +1,11 @@
 package FindPartner;
 
+import Config.NetworkTuple;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Logger;
-
-import Config.NetworkTuple;
 
 import static Config.ConfigFile.WAITING_TIME;
 
@@ -15,25 +15,19 @@ public class FindPartner implements IFindPartner {
 
     private final String tcpIP;
     private final int tcpPort;
-    private UUID uuid;
-    //private final MulticastServer server;
-    //private final MulticastClient client;
     private final Map<UUID, NetworkTuple> partner;
     private final FindPartnerInvoke findPartnerInvoke;
-    private boolean running = false;
+    private UUID uuid;
     private boolean receives = true;
-    private  int lessCounter = 0;
+    private int lessCounter = 0;
 
     public FindPartner(String tcpIP, int tcpPort, FindPartnerInvoke findPartnerInvoke) {
-        Runtime.getRuntime().addShutdownHook(new Thread(()->this.running = false));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+        }));
         this.partner = new HashMap<>();
         this.findPartnerInvoke = findPartnerInvoke;
-        //this.server = new MulticastServer();
-        //this.client = new MulticastClient();
         this.tcpIP = tcpIP;
         this.tcpPort = tcpPort;
-        this.running = true;
-        //this.receivePublishedInformation();
     }
 
     private void publishStatus() {
@@ -55,23 +49,18 @@ public class FindPartner implements IFindPartner {
 
     @Override
     public void receivePublishedInformation(String receivedString) {
-        //new Thread(() -> {
-            //while (this.running) {
-                //String receivedString = this.server.receive();
-                this.receives = true;
-                logger.finest(()-> "Received String: " + receivedString);
-                PartnerMessage msg = new PartnerMessage(receivedString);
-                if (msg.getMsgType().equals(EPartnerMessage.STATUS)) {
-                    this.addNewPartner(msg);
-                    this.checkAmount(msg);
-                } else if (msg.getMsgType().equals(EPartnerMessage.REQUEST)) {
-                    this.publishStatus();
-                } else if (msg.getMsgType().equals(EPartnerMessage.RESET)) {
-                    this.partner.clear();
-                    this.publishStatus();
-                }
-            //}
-        //}).start();
+        this.receives = true;
+        logger.finest(() -> "Received String: " + receivedString);
+        PartnerMessage msg = new PartnerMessage(receivedString);
+        if (msg.getMsgType().equals(EPartnerMessage.STATUS)) {
+            this.addNewPartner(msg);
+            this.checkAmount(msg);
+        } else if (msg.getMsgType().equals(EPartnerMessage.REQUEST)) {
+            this.publishStatus();
+        } else if (msg.getMsgType().equals(EPartnerMessage.RESET)) {
+            this.partner.clear();
+            this.publishStatus();
+        }
     }
 
     private void addNewPartner(PartnerMessage msg) {
@@ -95,7 +84,7 @@ public class FindPartner implements IFindPartner {
         } else if (msg.getAmount() > this.partner.size()) {
             // TODO send I got less -> need more
             logger.finest(() -> "I got [" + this.partner.size() + "/" + msg.getAmount() + "] partner");
-            this.lessCounter ++;
+            this.lessCounter++;
             if (lessCounter > COUNTER_MAX) {
                 this.reset();
             } else {
