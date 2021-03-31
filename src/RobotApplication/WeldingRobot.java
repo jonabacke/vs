@@ -1,6 +1,6 @@
 package RobotApplication;
 
-public class WeldingRobot implements IWeldingRobot {
+public class WeldingRobot implements IWedingRobotInvoke {
 
     private final Controller controller;
 
@@ -13,9 +13,8 @@ public class WeldingRobot implements IWeldingRobot {
 
     }
 
-    @Override
     public void register(int id) {
-        controller.register(0);
+        controller.register(id);
     }
 
     @Override

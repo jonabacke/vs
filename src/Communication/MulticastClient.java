@@ -1,4 +1,4 @@
-package FindPartner;
+package Communication;
 
 import Config.ConfigFile;
 
@@ -9,10 +9,9 @@ import java.util.logging.Logger;
 
 public class MulticastClient {
     private static final Logger logger = Logger.getGlobal();
-
-    private MulticastSocket socket = null;
     InetSocketAddress group = null;
     NetworkInterface networkInterface;
+    private MulticastSocket socket = null;
 
     public MulticastClient() {
         this.initSocket();
@@ -34,8 +33,8 @@ public class MulticastClient {
         if (msg == null) throw new IllegalArgumentException();
         byte[] buffer = msg.getBytes(StandardCharsets.UTF_8);
         DatagramPacket packet;
-            packet = new DatagramPacket(buffer, buffer.length, group);
-        logger.finest(()-> "send Msg: " + msg);
+        packet = new DatagramPacket(buffer, buffer.length, group);
+        logger.finest(() -> "send Msg: " + msg);
         try {
             socket.send(packet);
         } catch (IOException e) {

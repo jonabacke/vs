@@ -15,7 +15,7 @@ public class Marshaller {
         int amountArguments = (tokenizer.countTokens() - 2) / 2;
         String serviceName = tokenizer.nextToken();
         String methodName = tokenizer.nextToken();
-        Object [] arguments = new Object[amountArguments];
+        Object[] arguments = new Object[amountArguments];
         Class<?> serviceClass = null;
 
         try {
@@ -25,9 +25,9 @@ public class Marshaller {
         }
 
         assert serviceClass != null;
-        for (Method method: serviceClass.getDeclaredMethods()) {
+        for (Method method : serviceClass.getDeclaredMethods()) {
             if (method.getName().equalsIgnoreCase(methodName)) {
-                Parameter [] parameters = method.getParameters();
+                Parameter[] parameters = method.getParameters();
                 if (parameters.length != amountArguments) {
                     throw new IllegalArgumentException("Wrong amount of parameter");
                 }
@@ -40,15 +40,15 @@ public class Marshaller {
         return wrapper;
     }
 
-    public static String pack(Class<?> serviceClass, String function, Object [] parameterValues) {
+    public static String pack(Class<?> serviceClass, String function, Object[] parameterValues) {
         String result = "";
         result += serviceClass.getName();
         result += ConfigFile.SEPARATOR_NETWORK_CONCAT;
-        for (Method method: serviceClass.getDeclaredMethods()) {
+        for (Method method : serviceClass.getDeclaredMethods()) {
             if (method.getName().equalsIgnoreCase(function)) {
                 result = result.concat(method.getName());
                 result += ConfigFile.SEPARATOR_NETWORK_CONCAT;
-                Parameter [] parameters = method.getParameters();
+                Parameter[] parameters = method.getParameters();
                 if (parameterValues.length != parameters.length) {
                     throw new IllegalArgumentException();
                 }
@@ -75,7 +75,7 @@ public class Marshaller {
         return result;
     }
 
-    public static void castParameters(StringTokenizer tokenizer, Object [] arguments, Parameter [] parameters) {
+    public static void castParameters(StringTokenizer tokenizer, Object[] arguments, Parameter[] parameters) {
         for (int i = 0; i < parameters.length; i++) {
             String type = parameters[i].getType().getSimpleName();
             String paramType = tokenizer.nextToken();

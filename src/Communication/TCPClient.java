@@ -1,4 +1,4 @@
-package Lamport;
+package Communication;
 
 import java.io.IOException;
 import java.io.PrintWriter;

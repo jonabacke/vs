@@ -10,40 +10,43 @@ import java.util.logging.Logger;
 
 public class LamportMutex implements ILamportMutex {
     private static final Logger logger = Logger.getGlobal();
-
+    private final ReentrantLock mutex = new ReentrantLock();
+    private final ILamportInvoke lamportInvoke;
     private Map<UUID, NetworkTuple> partner;
     private UUID procID;
-    private final ReentrantLock mutex = new ReentrantLock();
     private AtomicInteger clock;
     private Queue<Request> queue;
     private Queue<Request> loggingQueue;
-    private final LamportInvoke lamportInvoke;
     private int semaphore;
 
-    public LamportMutex(LamportInvoke lamportInvoke) {
+    public LamportMutex(ILamportInvoke lamportInvoke) {
         this.semaphore = 0;
         this.lamportInvoke = lamportInvoke;
         this.partner = new HashMap<>();
         this.init();
     }
 
+    @Override
     public Queue<Request> getLoggingQueue() {
         try {
             this.mutex.lock();
             return loggingQueue;
-        }  finally {
+        } finally {
             this.mutex.unlock();
         }
     }
 
+    @Override
     public void setProcID(UUID procID) {
         this.procID = procID;
     }
 
+    @Override
     public void setPartner(Map<UUID, NetworkTuple> partner) {
         this.partner = partner;
     }
 
+    @Override
     public void gotError() {
         this.mutex.lock();
         for (UUID uuid : partner.keySet()) {
@@ -52,8 +55,7 @@ public class LamportMutex implements ILamportMutex {
         this.mutex.unlock();
     }
 
-    @Override
-    public void init() {
+    private void init() {
         this.clock = new AtomicInteger(0);
         this.queue = new PriorityQueue<>();
         this.loggingQueue = new PriorityQueue<>();
@@ -72,8 +74,7 @@ public class LamportMutex implements ILamportMutex {
         this.mutex.unlock();
     }
 
-    @Override
-    public void allowToEnter(UUID requester) {
+    private void allowToEnter(UUID requester) {
         Request r = new Request(this.clock.incrementAndGet(), this.procID, MsgEnum.ALLOW);
         this.lamportInvoke.send(requester, r.getNetworkString());
     }
@@ -104,7 +105,6 @@ public class LamportMutex implements ILamportMutex {
         }
     }
 
-    @Override
     public void receive(String msg) {
         Request request = new Request(msg);
         if (ConfigFile.LOG) {
@@ -128,7 +128,7 @@ public class LamportMutex implements ILamportMutex {
                 if (this.queue.size() > 0) {
                     boolean worked = this.queue.removeIf(x -> x.getMsgType().equals(MsgEnum.ENTER) && request.getProcID().toString().equals(x.getProcID().toString()));
                     if (worked) {
-                        this.semaphore ++;
+                        this.semaphore++;
                     } else {
                         logger.severe("Failed to release" + this.queue.toString());
                     }
@@ -149,11 +149,11 @@ public class LamportMutex implements ILamportMutex {
         this.queue.removeIf(x -> x.getMsgType().equals(MsgEnum.ALLOW) && x.getClock() <= this.clock.get());
     }
 
-    @Override
-    public void resetCircle() {
+    private void resetCircle() {
         this.semaphore -= ConfigFile.AMOUNT_WORKER;
     }
 
+    @Override
     public boolean isRunning() {
         mutex.lock();
         boolean result = this.semaphore < ConfigFile.AMOUNT_WORKER;

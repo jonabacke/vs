@@ -1,7 +1,7 @@
 package Middleware;
 
-import FindPartner.MulticastServer;
-import Lamport.TCPServer;
+import Communication.MulticastServer;
+import Communication.TCPServer;
 
 import java.io.BufferedReader;
 import java.net.Socket;
@@ -13,9 +13,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 public class CallHandler {
-    private MulticastServer multicastServer;
     private final Map<String, IMiddlewareCallableStub> stubs;
     AtomicBoolean running;
+    private MulticastServer multicastServer;
 
     public CallHandler() {
         this.stubs = new HashMap<>();

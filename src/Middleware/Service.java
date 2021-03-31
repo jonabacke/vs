@@ -1,7 +1,7 @@
 package Middleware;
 
+import Communication.TCPServer;
 import Config.ConfigFile;
-import Lamport.TCPServer;
 
 public class Service {
     private final String serviceName;

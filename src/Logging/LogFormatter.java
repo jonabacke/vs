@@ -20,26 +20,26 @@ public class LogFormatter extends Formatter {
 
     @Override
     public String format(LogRecord record) {
-        List<String> names  = Arrays.asList(record.getSourceClassName().split("\\."));
+        List<String> names = Arrays.asList(record.getSourceClassName().split("\\."));
         String moduleName;
 
 
-        if(names.size() == 0) {
+        if (names.size() == 0) {
             moduleName = record.getSourceClassName() + " " + record.getSourceMethodName();
         } else {
-            moduleName = names.get(names.size()-1) + " " + record.getSourceMethodName();
+            moduleName = names.get(names.size() - 1) + " " + record.getSourceMethodName();
         }
 
         String color = ANSI_BLUE;
-        if(record.getLevel() == Level.WARNING){
+        if (record.getLevel() == Level.WARNING) {
             color = ANSI_YELLOW;
-        } else if(record.getLevel() == Level.SEVERE){
+        } else if (record.getLevel() == Level.SEVERE) {
             color = ANSI_RED;
-        } else if(record.getLevel() == Level.INFO){
+        } else if (record.getLevel() == Level.INFO) {
             color = ANSI_GREEN;
         }
 
-        return color+"["+moduleName+"] "+record.getMessage()+ANSI_RESET+"\n";
+        return color + "[" + moduleName + "] " + record.getMessage() + ANSI_RESET + "\n";
     }
 
 }

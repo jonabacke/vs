@@ -8,9 +8,9 @@ public class ConfigFile {
     public final static int WAITING_TIME = 5000; // in millis
     public static final int CIRCLE_AMOUNT = 100;
     public final static String RECEIVE = "receive";
-    public final static String ERROR_RECEIVE = "errorReceived";
+    public final static String ERROR_RECEIVE = "errorReceive";
     public final static String RECEIVE_PUBLISH_INFORMATION = "receivePublishedInformation";
     public final static int AMOUNT_WORKER = 3;
-    public final static boolean LOG = true;
+    public final static boolean LOG = false;
 
 }

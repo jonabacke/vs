@@ -16,12 +16,12 @@ public class FindPartner implements IFindPartner {
     private final String tcpIP;
     private final int tcpPort;
     private final Map<UUID, NetworkTuple> partner;
-    private final FindPartnerInvoke findPartnerInvoke;
+    private final IFindPartnerInvoke findPartnerInvoke;
     private UUID uuid;
     private boolean receives = true;
     private int lessCounter = 0;
 
-    public FindPartner(String tcpIP, int tcpPort, FindPartnerInvoke findPartnerInvoke) {
+    public FindPartner(String tcpIP, int tcpPort, IFindPartnerInvoke findPartnerInvoke) {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
         }));
         this.partner = new HashMap<>();
@@ -47,7 +47,6 @@ public class FindPartner implements IFindPartner {
         this.findPartnerInvoke.publishMsg(msg);
     }
 
-    @Override
     public void receivePublishedInformation(String receivedString) {
         this.receives = true;
         logger.finest(() -> "Received String: " + receivedString);
@@ -73,16 +72,16 @@ public class FindPartner implements IFindPartner {
     private void checkAmount(PartnerMessage msg) {
         if (msg == null) throw new IllegalArgumentException();
         if (msg.getAmount() < this.partner.size()) {
-            // TODO send I got more
+            // send I got more
             logger.finest(() -> "I got [" + this.partner.size() + "/" + msg.getAmount() + "] partner");
             this.publishStatus();
             this.lessCounter = 0;
         } else if (msg.getAmount() == this.partner.size()) {
-            // TODO send I got same
+            // send I got same
             logger.finest(() -> "I got [" + this.partner.size() + "/" + msg.getAmount() + "] partner");
             logger.finest(() -> "Robot.Partner: " + this.partner.keySet().toString());
         } else if (msg.getAmount() > this.partner.size()) {
-            // TODO send I got less -> need more
+            // send I got less -> need more
             logger.finest(() -> "I got [" + this.partner.size() + "/" + msg.getAmount() + "] partner");
             this.lessCounter++;
             if (lessCounter > COUNTER_MAX) {

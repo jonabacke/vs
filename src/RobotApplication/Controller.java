@@ -2,8 +2,8 @@ package RobotApplication;
 
 import Config.ConfigFile;
 import Config.NetworkTuple;
-import FindPartner.FindPartner;
-import Lamport.LamportMutex;
+import FindPartner.IFindPartner;
+import Lamport.ILamportMutex;
 import Lamport.Request;
 
 import java.io.FileWriter;
@@ -16,22 +16,22 @@ import java.util.logging.Logger;
 
 import static java.lang.System.currentTimeMillis;
 
-public class Controller implements IWeldingRobot, IRobotCall {
+public class Controller implements IWeldingRobotCall, IControllerCall {
     private static final Logger logger = Logger.getGlobal();
-    private final RobotInvoke robotInvoke;
-    private UUID uuid;
-    private final Queue<Partner> partnerRobotsQueue;
-    private IWeldingRobot weldingRobot;
-    private final LamportMutex lamportMutex;
-    private Map<UUID, NetworkTuple> partner;
-    private final FindPartner findPartner;
-    private boolean running;
     private final ReentrantLock mutex = new ReentrantLock();
+    private final IControllerInvoke controllerInvoke;
+    private final ILamportMutex lamportMutex;
+    private final IFindPartner findPartner;
+    private final Queue<Partner> partnerRobotsQueue;
     private final AtomicBoolean emergencyCall;
+    private boolean running;
+    private IWedingRobotInvoke weldingRobot;
+    private Map<UUID, NetworkTuple> partner;
+    private UUID uuid;
 
-    public Controller(UUID uuid, RobotInvoke robotInvoke, LamportMutex lamportMutex, FindPartner findPartner) {
+    public Controller(UUID uuid, IControllerInvoke controllerInvoke, ILamportMutex lamportMutex, IFindPartner findPartner) {
         this.uuid = uuid;
-        this.robotInvoke = robotInvoke;
+        this.controllerInvoke = controllerInvoke;
         this.lamportMutex = lamportMutex;
         this.findPartner = findPartner;
         this.partnerRobotsQueue = new PriorityQueue<>();
@@ -39,7 +39,7 @@ public class Controller implements IWeldingRobot, IRobotCall {
         this.emergencyCall = new AtomicBoolean(false);
     }
 
-    public void init(IWeldingRobot weldingRobot) {
+    public void init(IWedingRobotInvoke weldingRobot) {
         this.weldingRobot = weldingRobot;
     }
 
@@ -54,7 +54,7 @@ public class Controller implements IWeldingRobot, IRobotCall {
             throw new IllegalArgumentException("zu wenig Robos" + partner.size());
         }
         this.lamportMutex.setPartner(this.partner);
-        this.robotInvoke.setPartner(this.partner);
+        this.controllerInvoke.setPartner(this.partner);
         for (Map.Entry<UUID, NetworkTuple> tuple : this.partner.entrySet()) {
             logger.warning("Hallo " + tuple.getKey() + ", I am " + this.uuid.toString());
             this.partnerRobotsQueue.add(new Partner(tuple.getKey(), tuple.getValue()));
@@ -68,46 +68,17 @@ public class Controller implements IWeldingRobot, IRobotCall {
         while (amount > 0 && this.running) {
         logger.warning("Start Circle");
             if (this.checkFirstThreeElements(ConfigFile.AMOUNT_WORKER)) {
-                this.lamportMutex.requestToEnter();
-                while (this.lamportMutex.allowedToEnter()) {
-                    this.sleep(0);
+                this.work();
+            } else {
+                while (this.lamportMutex.isRunning() && this.running && !this.emergencyCall.get()) {
+                    sleep(0);
                 }
-                if ((int) (Math.random() * 100) < 1) {
-                    logger.severe("Got Error " + this.uuid);
-                    this.setStatus(-1);
-                    this.lamportMutex.gotError();
-                    for (UUID uuid : this.partner.keySet()) {
-                        robotInvoke.gotError(uuid, this.uuid);
-                    }
-                } else {
-                    this.startWorking();
-                    this.lamportMutex.release();
-                }
-            }
-            while (this.lamportMutex.isRunning() && this.running && !this.emergencyCall.get()) {
-                sleep(0);
             }
             if (this.emergencyCall.get()) {
                 logger.severe("Start emergency work");
                 this.emergencyCall.set(false);
-                this.lamportMutex.requestToEnter();
-                while (this.lamportMutex.allowedToEnter()) {
-                    this.sleep(0);
-                }
-                if ((int) (Math.random() * 100) <= 1) {
-                    this.lamportMutex.gotError();
-                    logger.severe("Got Error " + this.uuid);
-                    for (UUID uuid : this.partner.keySet()) {
-                         robotInvoke.gotError(uuid, this.uuid);
-                    }
-                } else {
-                    this.startWorking();
-                    this.lamportMutex.release();
-                }
+                this.work();
                 logger.severe("End emergency work");
-                while (this.lamportMutex.isRunning() && this.running && !this.emergencyCall.get()) {
-                    sleep(0);
-                }
             }
             amount --;
             logger.warning("End Circle: " + amount);
@@ -120,6 +91,27 @@ public class Controller implements IWeldingRobot, IRobotCall {
         }
         if (ConfigFile.LOG){
             this.writeOut();
+        }
+    }
+
+    private void work() {
+        this.lamportMutex.requestToEnter();
+        while (this.lamportMutex.allowedToEnter()) {
+            this.sleep(0);
+        }
+        if ((int) (Math.random() * 100) < 1) {
+            logger.severe("Got Error " + this.uuid);
+            this.weldingRobot.setStatus(-1);
+            this.lamportMutex.gotError();
+            for (UUID uuid : this.partner.keySet()) {
+                controllerInvoke.gotError(uuid, this.uuid);
+            }
+        } else {
+            this.startWorking();
+            this.lamportMutex.release();
+        }
+        while (this.lamportMutex.isRunning() && this.running) {
+            sleep(0);
         }
     }
 
@@ -139,21 +131,10 @@ public class Controller implements IWeldingRobot, IRobotCall {
     }
 
     public void startWorking() {
-        this.setStatus(1);
-        this.welding();
-        this.setStatus(0);
-    }
-
-    @Override
-    public void setStatus(int status) {
-        this.weldingRobot.setStatus(status);
-    }
-
-    @Override
-    public void welding() {
+        this.weldingRobot.setStatus(1);
         this.weldingRobot.welding();
+        this.weldingRobot.setStatus(0);
     }
-
 
     private boolean checkFirstThreeElements(int amountWorker) {
         this.mutex.lock();
@@ -183,15 +164,13 @@ public class Controller implements IWeldingRobot, IRobotCall {
     }
 
     @Override
-    public void errorReceived(String uuidString) {
+    public void errorReceive(String uuidString) {
         logger.severe("Error received from " + uuidString);
-        // TODO check if size < 3 -> End Program
         this.mutex.lock();
         if (this.partnerRobotsQueue.size() <= ConfigFile.AMOUNT_WORKER) {
             this.running = false;
             logger.severe("Nicht genung Roboter zum schweißen verfügbar");
         }
-        // TODO delete at Queue
         this.partnerRobotsQueue.removeIf(x -> x.getUuid().toString().equals(uuidString));
         this.mutex.unlock();
         if (this.checkFirstThreeElements(1)) {

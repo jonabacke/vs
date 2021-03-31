@@ -19,7 +19,7 @@ class PartnerTest {
 
     @BeforeEach
     void setUp() {
-        Partner [] partners = new Partner[100];
+        Partner[] partners = new Partner[100];
         for (int i = 0; i < 100; i++) {
             Partner partner = new Partner(UUID.randomUUID(), new NetworkTuple("asd", 123));
             partner.setWorkedCounter((int) (Math.random() * 1000));
@@ -50,7 +50,7 @@ class PartnerTest {
 
         Iterator<Partner> iter1 = partners1.iterator();
         Iterator<Partner> iter2 = partners6.iterator();
-        while (iter1.hasNext()){
+        while (iter1.hasNext()) {
             assertEquals(iter1.next().toString(), (iter2.next().toString()));
         }
 
